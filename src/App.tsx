@@ -108,6 +108,7 @@ const PARTNERS = [
   'Fortinet',
   'Dell',
   'HPE',
+  'HPE Juniper',
   'Microsoft',
   'Hikvision',
   'RSA Security',
