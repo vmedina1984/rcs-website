@@ -108,9 +108,9 @@ const PARTNERS = [
   'Fortinet',
   'Dell',
   'HPE',
-  'Palo Alto',
-  'VMware',
   'Microsoft',
+  'Hikvision',
+  'RSA Security',
 ]
 
 function Logo({ className = 'h-10 w-10' }: { className?: string }) {
