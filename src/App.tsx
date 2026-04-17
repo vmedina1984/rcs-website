@@ -403,11 +403,11 @@ function Products() {
           <p className="text-center text-xs uppercase tracking-[0.3em] text-white/50">
             Nuestros Partners
           </p>
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
             {PARTNERS.map((p) => (
               <div
                 key={p}
-                className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm font-medium text-white/70"
+                className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm font-medium text-white/70 min-w-[120px] sm:min-w-[140px]"
               >
                 {p}
               </div>
