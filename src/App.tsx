@@ -474,7 +474,8 @@ function About() {
 
 type SubmitState = 'idle' | 'loading' | 'success' | 'error'
 
-const CONTACT_ENDPOINT = 'https://formsubmit.co/ajax/info@rcs.com.pa'
+const CONTACT_ENDPOINT = 'https://api.web3forms.com/submit'
+const WEB3FORMS_ACCESS_KEY = '8bd79198-9743-4b88-a214-f7f86aca0456'
 
 function Contact() {
   const [state, setState] = useState<SubmitState>('idle')
@@ -484,14 +485,21 @@ function Contact() {
     e.preventDefault()
     const form = e.currentTarget
     const data = new FormData(form)
+
+    if (String(data.get('botcheck') || '') !== '') {
+      setState('success')
+      form.reset()
+      return
+    }
+
     const payload = {
+      access_key: WEB3FORMS_ACCESS_KEY,
       name: String(data.get('name') || ''),
       company: String(data.get('company') || ''),
       email: String(data.get('email') || ''),
       message: String(data.get('message') || ''),
-      _subject: 'Nueva consulta desde rcs-website',
-      _template: 'table',
-      _captcha: 'false',
+      subject: 'Nueva consulta desde rcs.com.pa',
+      from_name: 'RCS · AI Driven Solutions',
     }
 
     setState('loading')
@@ -506,15 +514,12 @@ function Contact() {
         },
         body: JSON.stringify(payload),
       })
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
-      }
-      const json = (await res.json()) as { success?: string | boolean; message?: string }
-      if (json.success === 'true' || json.success === true) {
+      const json = (await res.json()) as { success?: boolean; message?: string }
+      if (res.ok && json.success === true) {
         setState('success')
         form.reset()
       } else {
-        throw new Error(json.message || 'No se pudo enviar el mensaje')
+        throw new Error(json.message || `No se pudo enviar el mensaje (HTTP ${res.status})`)
       }
     } catch (err) {
       setState('error')
@@ -598,6 +603,14 @@ function Contact() {
             onSubmit={onSubmit}
             className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 sm:p-10 backdrop-blur-sm"
           >
+            <input
+              type="checkbox"
+              name="botcheck"
+              tabIndex={-1}
+              autoComplete="off"
+              className="hidden"
+              aria-hidden="true"
+            />
             <div className="grid sm:grid-cols-2 gap-5">
               <div>
                 <label
