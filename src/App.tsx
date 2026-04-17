@@ -108,9 +108,11 @@ const PARTNERS = [
   'Fortinet',
   'Dell',
   'HPE',
-  'Palo Alto',
-  'VMware',
+  'HPE Juniper',
   'Microsoft',
+  'Hikvision',
+  'RSA Security',
+  'Sophos',
 ]
 
 function Logo({ className = 'h-10 w-10' }: { className?: string }) {
@@ -402,11 +404,11 @@ function Products() {
           <p className="text-center text-xs uppercase tracking-[0.3em] text-white/50">
             Nuestros Partners
           </p>
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
             {PARTNERS.map((p) => (
               <div
                 key={p}
-                className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm font-medium text-white/70"
+                className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm font-medium text-white/70 min-w-[120px] sm:min-w-[140px]"
               >
                 {p}
               </div>
@@ -470,20 +472,58 @@ function About() {
   )
 }
 
-function Contact() {
-  const [sent, setSent] = useState(false)
+type SubmitState = 'idle' | 'loading' | 'success' | 'error'
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+const CONTACT_ENDPOINT = 'https://formsubmit.co/ajax/info@rcs.com.pa'
+
+function Contact() {
+  const [state, setState] = useState<SubmitState>('idle')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = e.currentTarget
     const data = new FormData(form)
-    const name = encodeURIComponent(String(data.get('name') || ''))
-    const company = encodeURIComponent(String(data.get('company') || ''))
-    const email = encodeURIComponent(String(data.get('email') || ''))
-    const message = encodeURIComponent(String(data.get('message') || ''))
-    const body = `Nombre: ${name}%0ACompañía: ${company}%0AEmail: ${email}%0A%0A${message}`
-    window.location.href = `mailto:info@rcs.com.pa?subject=Consulta%20desde%20el%20sitio%20web&body=${body}`
-    setSent(true)
+    const payload = {
+      name: String(data.get('name') || ''),
+      company: String(data.get('company') || ''),
+      email: String(data.get('email') || ''),
+      message: String(data.get('message') || ''),
+      _subject: 'Nueva consulta desde rcs-website',
+      _template: 'table',
+      _captcha: 'false',
+    }
+
+    setState('loading')
+    setErrorMsg(null)
+
+    try {
+      const res = await fetch(CONTACT_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
+      const json = (await res.json()) as { success?: string | boolean; message?: string }
+      if (json.success === 'true' || json.success === true) {
+        setState('success')
+        form.reset()
+      } else {
+        throw new Error(json.message || 'No se pudo enviar el mensaje')
+      }
+    } catch (err) {
+      setState('error')
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : 'Ocurrió un error al enviar el mensaje. Intenta nuevamente.',
+      )
+    }
   }
 
   return (
@@ -624,14 +664,21 @@ function Contact() {
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-full bg-gold-gradient px-6 py-3 text-sm font-semibold text-black shadow-lg shadow-amber-500/20 hover:brightness-110 transition"
+                disabled={state === 'loading'}
+                className="inline-flex items-center gap-2 rounded-full bg-gold-gradient px-6 py-3 text-sm font-semibold text-black shadow-lg shadow-amber-500/20 hover:brightness-110 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Enviar mensaje
-                <ArrowRight className="h-4 w-4" />
+                {state === 'loading' ? 'Enviando...' : 'Enviar mensaje'}
+                {state !== 'loading' && <ArrowRight className="h-4 w-4" />}
               </button>
-              {sent && (
-                <span className="text-sm text-gold">
-                  Abriremos tu cliente de correo para completar el envío.
+              {state === 'success' && (
+                <span className="inline-flex items-center gap-2 text-sm text-gold">
+                  <Check className="h-4 w-4" />
+                  ¡Mensaje enviado! Te responderemos pronto.
+                </span>
+              )}
+              {state === 'error' && (
+                <span className="text-sm text-red-400">
+                  {errorMsg ?? 'No se pudo enviar el mensaje. Intenta de nuevo.'}
                 </span>
               )}
             </div>
